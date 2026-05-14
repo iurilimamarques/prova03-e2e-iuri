@@ -25,13 +25,17 @@ jobs:
       run: npm run dev > /tmp/vite.log 2>&1 &
     - name: Wait for server
       run: |
-        for i in {1..30}; do
-          if curl -f http://127.0.0.1:5173/ > /dev/null 2>&1; then
+        sleep 3
+        for i in {1..60}; do
+          if nc -z localhost 5173 2>/dev/null; then
             echo "Server is ready"
+            sleep 1
             exit 0
           fi
-          echo "Waiting for server... ($i/30)"
-          sleep 2
+          if [ $((i % 10)) -eq 0 ]; then
+            echo "Waiting for server... ($i/60)"
+          fi
+          sleep 1
         done
         echo "Server failed to start"
         cat /tmp/vite.log
