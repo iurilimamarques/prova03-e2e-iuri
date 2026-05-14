@@ -20,7 +20,22 @@ jobs:
         node-version: 22
         cache: 'npm'      
     - run: npm install 
-    - run: npx playwright install      
+    - run: npx playwright install
+    - name: Start dev server
+      run: npm run dev > /tmp/vite.log 2>&1 &
+    - name: Wait for server
+      run: |
+        for i in {1..30}; do
+          if curl -f http://127.0.0.1:5173/ > /dev/null 2>&1; then
+            echo "Server is ready"
+            exit 0
+          fi
+          echo "Waiting for server... ($i/30)"
+          sleep 2
+        done
+        echo "Server failed to start"
+        cat /tmp/vite.log
+        exit 1
     - run: npm run actions  
       env:
         ZEROSTEP_TOKEN: ${{ secrets.ZEROSTEP_TOKEN }}       
