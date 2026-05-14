@@ -21,23 +21,27 @@ jobs:
         cache: 'npm'      
     - run: npm install 
     - run: npx playwright install
+    - run: npm run build
     - name: Start dev server
-      run: npm run dev > /tmp/vite.log 2>&1 &
+      run: |
+        npm run dev > /tmp/vite.log 2>&1 &
+        echo $! > /tmp/vite.pid
+        sleep 2
     - name: Wait for server
       run: |
-        sleep 3
         for i in {1..60}; do
-          if nc -z localhost 5173 2>/dev/null; then
-            echo "Server is ready"
+          if curl -s http://localhost:5173/ > /dev/null 2>&1; then
+            echo "✓ Server is ready on http://localhost:5173/"
             sleep 1
             exit 0
           fi
           if [ $((i % 10)) -eq 0 ]; then
-            echo "Waiting for server... ($i/60)"
+            echo "Waiting for server... attempt $i/60"
           fi
           sleep 1
         done
-        echo "Server failed to start"
+        echo "✗ Server failed to start after 60s"
+        echo "=== Vite logs ==="
         cat /tmp/vite.log
         exit 1
     - run: npm run actions  
